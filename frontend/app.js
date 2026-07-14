@@ -7,7 +7,9 @@
 // ─── 配置 ───
 
 // 后端 API 地址（部署时修改为实际地址）
-const API_BASE = 'http://localhost:8000';
+// 部署时改为 Render / 阿里云 FC 实际地址
+// const API_BASE = 'http://localhost:8000';  // 本地开发
+const API_BASE = 'https://ai-resume-analyzer-mujt.onrender.com';  // 线上部署
 
 // ─── 全局状态 ───
 
