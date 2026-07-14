@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 智能简历分析系统</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <h1>🤖 AI 智能简历分析系统</h1>
+            <p class="subtitle">上传简历 PDF，AI 自动提取关键信息，智能匹配岗位需求</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Step 1: Upload -->
+        <section class="card" id="upload-section">
+            <div class="step-badge">Step 1</div>
+            <h2>📄 上传简历</h2>
+            <p>支持 PDF 格式，多页简历自动解析</p>
+            <div class="upload-area" id="upload-area">
+                <div class="upload-icon">📁</div>
+                <p class="upload-hint">拖拽 PDF 文件到此处，或点击选择文件</p>
+                <input type="file" id="file-input" accept=".pdf" hidden>
+                <button class="btn btn-primary" id="upload-btn">选择文件</button>
+            </div>
+            <div class="upload-status" id="upload-status" style="display:none;">
+                <div class="status-content">
+                    <span class="status-icon">⏳</span>
+                    <span class="status-text" id="status-text">正在解析...</span>
+                </div>
+            </div>
+            <div class="text-preview" id="text-preview" style="display:none;">
+                <h3>📝 解析文本预览</h3>
+                <pre id="preview-content"></pre>
+            </div>
+        </section>
+
+        <!-- Step 2: Job Description -->
+        <section class="card" id="jd-section" style="display:none;">
+            <div class="step-badge">Step 2</div>
+            <h2>🎯 岗位需求描述</h2>
+            <p>输入招聘岗位的要求，系统将自动进行匹配分析</p>
+            <textarea id="jd-input" rows="6" placeholder="请粘贴岗位描述，例如：
+
+岗位名称：高级 Python 开发工程师
+岗位要求：
+1. 3年以上 Python 开发经验
+2. 熟悉 Django/Flask/FastAPI 等框架
+3. 有 MySQL、Redis 使用经验
+4. 本科及以上学历
+5. 有微服务架构经验优先
+..."></textarea>
+            <button class="btn btn-primary" id="analyze-btn" disabled>🔍 开始分析匹配</button>
+        </section>
+
+        <!-- Step 3: Results -->
+        <section class="card" id="result-section" style="display:none;">
+            <div class="step-badge">Step 3</div>
+            <h2>📊 分析结果</h2>
+
+            <!-- Loading -->
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>AI 正在分析中，请稍候...</p>
+            </div>
+
+            <!-- Error -->
+            <div class="error-box" id="error-box" style="display:none;">
+                <p id="error-message"></p>
+            </div>
+
+            <!-- Method Badges -->
+            <div class="method-badges" id="method-badges" style="display:none;">
+                <span class="badge" id="badge-extraction">🔍 提取方式: --</span>
+                <span class="badge" id="badge-match">🎯 匹配方式: --</span>
+                <span class="badge badge-cache" id="badge-cache" style="display:none;">⚡ 缓存命中</span>
+            </div>
+
+            <!-- Score Overview -->
+            <div class="score-overview" id="score-overview" style="display:none;">
+                <div class="score-circle">
+                    <div class="score-number" id="overall-score">0</div>
+                    <div class="score-label">综合评分</div>
+                </div>
+                <div class="score-details">
+                    <div class="score-item">
+                        <span class="score-item-label">技能匹配率</span>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="skill-rate-bar"></div>
+                        </div>
+                        <span class="score-item-value" id="skill-rate">0%</span>
+                    </div>
+                    <div class="score-item">
+                        <span class="score-item-label">经验相关性</span>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="exp-rate-bar"></div>
+                        </div>
+                        <span class="score-item-value" id="exp-rate">0%</span>
+                    </div>
+                    <div class="score-item">
+                        <span class="score-item-label">学历匹配度</span>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="edu-rate-bar"></div>
+                        </div>
+                        <span class="score-item-value" id="edu-rate">0%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resume Info -->
+            <div class="info-grid" id="info-grid" style="display:none;">
+                <div class="info-card">
+                    <h3>👤 基本信息</h3>
+                    <div class="info-row"><span class="label">姓名</span><span id="info-name">-</span></div>
+                    <div class="info-row"><span class="label">电话</span><span id="info-phone">-</span></div>
+                    <div class="info-row"><span class="label">邮箱</span><span id="info-email">-</span></div>
+                    <div class="info-row"><span class="label">地址</span><span id="info-address">-</span></div>
+                </div>
+                <div class="info-card">
+                    <h3>💼 求职意向</h3>
+                    <div class="info-row"><span class="label">期望职位</span><span id="info-position">-</span></div>
+                    <div class="info-row"><span class="label">期望薪资</span><span id="info-salary">-</span></div>
+                    <div class="info-row"><span class="label">工作年限</span><span id="info-years">-</span></div>
+                </div>
+                <div class="info-card">
+                    <h3>🎓 教育背景</h3>
+                    <div class="info-row"><span class="label">学历</span><span id="info-degree">-</span></div>
+                    <div class="info-row"><span class="label">院校</span><span id="info-school">-</span></div>
+                    <div class="info-row"><span class="label">专业</span><span id="info-major">-</span></div>
+                </div>
+                <div class="info-card full-width">
+                    <h3>🛠 技能</h3>
+                    <div class="skill-tags" id="info-skills"></div>
+                </div>
+                <div class="info-card full-width" id="projects-card" style="display:none;">
+                    <h3>📂 项目经历</h3>
+                    <div id="info-projects"></div>
+                </div>
+            </div>
+
+            <!-- Match Keywords -->
+            <div class="match-keywords" id="match-keywords" style="display:none;">
+                <div class="keyword-group matched">
+                    <h4>✅ 匹配关键词</h4>
+                    <div class="keyword-tags" id="matched-tags"></div>
+                </div>
+                <div class="keyword-group missing">
+                    <h4>❌ 缺失关键词</h4>
+                    <div class="keyword-tags" id="missing-tags"></div>
+                </div>
+            </div>
+
+            <!-- AI Analysis -->
+            <div class="ai-analysis" id="ai-analysis" style="display:none;">
+                <h3>🤖 AI 综合分析</h3>
+                <p id="ai-analysis-text"></p>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="actions" id="actions" style="display:none;">
+                <button class="btn btn-primary" id="reset-btn">🔄 换个 JD 重新匹配</button>
+                <button class="btn btn-secondary" id="new-upload-btn">📤 上传新简历</button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>AI 赋能的智能简历分析系统 &copy; 2026 | Powered by FastAPI + LLM</p>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
