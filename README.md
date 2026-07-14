@@ -133,33 +133,70 @@ python -m http.server 3000
 
 ## 部署指南
 
-### 后端：阿里云函数计算 FC
+### 后端部署（二选一）
 
-1. **通过阿里云控制台创建函数**
-   - 运行时：Python 3.10+
-   - 内存：512MB+
-   - 超时时间：120 秒
+#### 方案 A：阿里云函数计算 FC（推荐，符合题目要求）
 
-2. **安装依赖层**
-   ```bash
-   pip install -r requirements.txt -t ./python
-   zip -r layer.zip python/
-   ```
-   将 `layer.zip` 上传为层。
+**1. 开通服务**
+- 登录 [阿里云控制台](https://fcnext.console.aliyun.com/)
+- 开通"函数计算 FC"服务
+- 地域建议选"华东1（杭州）"
 
-3. **配置环境变量**
-   在函数配置中设置 `AI_API_KEY` 等环境变量。
+**2. 创建函数**
+- 服务名称：`resume-analyzer`
+- 创建函数 → 使用 **Custom Runtime**
+- 运行环境：Python 3.10
+- 内存：512 MB
+- 超时时间：120 秒
 
-4. **配置 API 网关**
-   为函数创建 HTTP 触发器，获取公网访问地址。
+**3. 打包上传**
 
-### 前端：GitHub Pages
+```bash
+cd backend
 
-1. Push 代码到 GitHub 仓库
-2. 修改 `frontend/app.js` 中的 `API_BASE` 为后端实际地址
-3. 进入仓库 Settings → Pages
-4. Source 选择 `main` 分支，目录选择 `/frontend`
-5. 保存后获取访问地址
+# 安装依赖到本地目录
+pip install -r requirements.txt -t ./package
+
+# 复制项目文件到 package
+cp *.py package/
+cp bootstrap package/
+chmod +x package/bootstrap
+
+# 打包
+cd package && zip -r ../deploy.zip . && cd ..
+```
+
+**4. 上传并配置**
+- 函数代码 → 上传 `deploy.zip`
+- 启动命令留空（由 bootstrap 自动执行）
+- 环境变量添加：
+  ```
+  AI_API_BASE_URL=https://api.deepseek.com/v1
+  AI_API_KEY=你的API Key
+  AI_MODEL=deepseek-chat
+  CACHE_TYPE=memory
+  ```
+- 创建 HTTP 触发器 → 认证方式选"无需认证"
+- 获取公网访问地址（类似 `https://xxx.cn-hangzhou.fc.aliyuncs.com`）
+
+**5. 更新前端 API 地址**
+- 修改 `frontend/app.js` 第 10 行
+- `const API_BASE = 'https://你的FC域名.cn-hangzhou.fc.aliyuncs.com';`
+- 提交并 push，GitHub Pages 自动更新
+
+#### 方案 B：免费平台快速部署（演示用）
+
+如果来不及开通阿里云，可先用免费平台部署后端做演示：
+
+- **[Render](https://render.com)** — 免费额度，支持 FastAPI，5 分钟部署
+- **[Railway](https://railway.app)** — 点击即部署
+
+部署后在对应平台设置环境变量，再把 `app.js` 的 `API_BASE` 改成平台分配的域名即可。
+
+### 前端：GitHub Pages（已完成 ✅）
+
+- 推送到 `main` 分支自动触发部署
+- 地址：`https://你的用户名.github.io/ai-resume-analyzer`
 
 ## 设计说明
 
